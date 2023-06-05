@@ -19,5 +19,6 @@
 - instance.name()
 - instance.balanceOf('0x8006c50cEcb5a1A4Adc5c9753C776ACd74b5e58b') // To be refactored
 
-##  Refer to: https://www.quicknode.com/guides/ethereum-development/smart-contracts/how-to-setup-local-development-environment-for-solidity/how-to-setup-local-development-environment-for-solidity/#truffle
-
+##  Reference:
+- https://www.quicknode.com/guides/ethereum-development/smart-contracts/how-to-setup-local-development-environment-for-solidity/how-to-setup-local-development-environment-for-solidity/#truffle
+- https://eips.ethereum.org/EIPS/eip-20#methods
