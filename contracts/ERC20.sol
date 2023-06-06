@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.1;
 
-import "./IERC20.sol";
-import "../extensions/IERC20Metadata.sol";
-import "../extensions/Context.sol";
+import "../interfaces/IERC20.sol";
+import "../interfaces/IERC20Metadata.sol";
+import "./abstracts/Context.sol";
 
 contract ERC20 is Context, IERC20, IERC20Metadata {
     
@@ -25,8 +25,8 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _name = name_;
         _symbol = symbol_;
         
-        _mint(msg.sender, initialSupply * 10**18);
-        emit Transfer(0x0000000000000000000000000000000000000000, address(0), _totalSupply);
+        _mint(msg.sender, initialSupply);
+        emit Transfer(address(0), msg.sender, _totalSupply);
     }
 
     // Optional name(), symbol() and decimals() functions (IERC20Metadata)    

@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.1;
 
-import "../contracts/IERC20.sol";
+import "../interfaces/IERC20.sol";
 
 // Optional methods from the ERC-20
 interface IERC20Metadata is IERC20 {
