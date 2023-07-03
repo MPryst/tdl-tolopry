@@ -58,7 +58,7 @@ contract Blackjack {
 
     function shuffleDeck(uint256 _randomNumber) public payable {
         require(deck.cards.length > 0, "Array is empty");
-        for (uint256 i = 0; i < deck.cards.length; i++) {
+        for (uint256 i = 0; i < deck.cards.length; i++) {   
             uint256 n = i + (_randomNumber % (deck.cards.length - i));
             if (i != n) {
                 Card memory temp = deck.cards[n];
@@ -81,11 +81,13 @@ contract Blackjack {
     function joinGame() public {
         playerSums[msg.sender] = 0;
         playerBets[msg.sender] = 0;
+        //TODO: Acá cuando el jugador se suma a la "mesa" debe recibir una cantidad de monedas para poder jugar.
         coin.transfer(msg.sender, 1000);
     }
 
     function placeBet(uint256 betValue) public {
         playerBets[msg.sender] = betValue;
+        //TODO: El jugador apuesta, debe darle monedas al casino. A menos que gane, esa moneda no la ves mas.
         coin.transferFrom(msg.sender, address(this), betValue);
     }
 
@@ -151,7 +153,8 @@ contract Blackjack {
 
         if (dealerSum > 21) {
             emit PlayerWon(msg.sender);
-            coin.transfer(msg.sender, playerBets[msg.sender] * 2);
+            //TODO: En este caso gana el jugador, se le debe transferir la cantidad de monedas que apostó * 2
+            coin.transfer(msg.sender, playerBets[msg.sender] * betMultiplication);
             playerBets[msg.sender] = 0;
             return msg.sender;
         }
@@ -163,7 +166,8 @@ contract Blackjack {
         }
 
         emit PlayerWon(msg.sender);
-        coin.transfer(msg.sender, playerBets[msg.sender] * 2);
+        //TODO: En este caso gana el jugador, se le debe transferir la cantidad de monedas que apostó * 2
+        coin.transfer(msg.sender, playerBets[msg.sender] * betMultiplication);
         playerBets[msg.sender] = 0;
         return msg.sender;
     }
