@@ -7,8 +7,9 @@ import "../interfaces/IERC20.sol";
 import "../interfaces/IERC20Metadata.sol";
 import "./abstracts/Context.sol";
 
+
 contract ERC20 is Context, IERC20, IERC20Metadata {
-    
+   
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -18,13 +19,14 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     string private _symbol;
 
     constructor(string memory name_, string memory symbol_, uint initialSupply) {
-        
+       
         require(initialSupply > 0, "Initial supply has to be greater than 0");
+
 
         _totalSupply = initialSupply;
         _name = name_;
         _symbol = symbol_;
-        
+       
         _mint(msg.sender, initialSupply);
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
@@ -33,20 +35,20 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     function name() public view virtual override returns (string memory) {
         return _name;
     }
-    
+   
     function symbol() public view virtual override returns (string memory) {
         return _symbol;
     }
-    
+   
     function decimals() public view virtual override returns (uint8) {
-        return 18;
+        return 2;
     }
    
-   // Implementing the mandatory IERC20 methods 
+   // Implementing the mandatory IERC20 methods
     function totalSupply() public view virtual override returns (uint256) {
         return _totalSupply;
     }
-    
+   
     function balanceOf(address account) public view virtual override returns (uint256) {
         return _balances[account];
     }
@@ -69,7 +71,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _approve(owner, spender, amount);
         return true;
     }
-    
+   
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
@@ -78,9 +80,11 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
+       
+        _mint(spender, addedValue);
         return true;
     }
-    
+   
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
@@ -88,7 +92,8 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
-
+       
+        _burn(spender, subtractedValue);
         return true;
     }
    
@@ -97,8 +102,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(to != address(0), "ERC20: transfer to the zero address");
         _update(from, to, amount);
     }
-
-    
+   
     function _update(address from, address to, uint256 amount) internal virtual {
         if (from == address(0)) {
             _totalSupply += amount;
@@ -130,13 +134,12 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         require(account != address(0), "ERC20: mint to the zero address");
         _update(address(0), account, amount);
     }
-    
+   
     function _burn(address account, uint256 amount) internal {
         require(account != address(0), "ERC20: burn from the zero address");
         _update(account, address(0), amount);
     }
 
-    
     function _approve(address owner, address spender, uint256 amount) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
