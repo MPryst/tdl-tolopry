@@ -4,6 +4,7 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "./ToLoPryCoin.sol";
 import "./NFTPrize.sol";
+import "hardhat/console.sol";
 
 
 contract Blackjack {
@@ -24,6 +25,9 @@ contract Blackjack {
 
     mapping(address => uint256) playerSums;
     mapping(address => uint256) playerBets;
+    mapping(address => uint256) playerCredit;
+
+
 
 
     event CardDealt(Card);
@@ -71,7 +75,10 @@ contract Blackjack {
 
 
     function shuffleDeck(uint256 _randomNumber) public payable {
+        require(!checkGameOver(), "Blackjack: Can't shuffle an ongoing game!");
         require(deck.cards.length > 0, "Array is empty");
+
+
         for (uint256 i = 0; i < deck.cards.length; i++) {  
             uint256 n = i + (_randomNumber % (deck.cards.length - i));
             if (i != n) {
@@ -89,6 +96,7 @@ contract Blackjack {
             card = this.getCard();
             dealerSum += card.number;
         }
+        console.log("Game started");
 
 
         emit CasinoValue(card.number);
@@ -96,18 +104,26 @@ contract Blackjack {
 
 
     function joinGame() public {
+        require(!checkGameOver(), "Blackjack: Can't join while on an ongoing game!");
         playerSums[msg.sender] = 0;
         playerBets[msg.sender] = 0;
-        coin.burnAmountFor(msg.sender, 1000);
-        //TODO: Acá cuando el jugador se suma a la "mesa" debe recibir una cantidad de monedas para poder jugar.
-        //coin.transfer(msg.sender, 1000);
+        // Coin interaction: Joining a table effectively burns some users tokens.        
+        // And to avoid making unnecesary contract calls in the future, we keep a local score.
+        if (coin.burnAmountFor(msg.sender, 1000)) {
+            playerCredit[msg.sender] += 1000;
+        }
+        console.log("Current player credit %s",  playerCredit[msg.sender]);
     }
 
 
     function placeBet(uint256 betValue) public {
-        playerBets[msg.sender] = betValue;
-        //TODO: El jugador apuesta, debe darle monedas al casino. A menos que gane, esa moneda no la ves mas.
-        coin.transferFrom(msg.sender, address(this), betValue);
+        require(playerCredit[msg.sender] >= betValue, "Blackjack: Can't bet more than on the table!");
+
+
+        playerBets[msg.sender] = betValue;        
+        // Coin "interaction": We just update the credit of the player.
+        playerCredit[msg.sender] -= betValue;
+        console.log("Current player credit %s",  playerCredit[msg.sender]);        
     }
 
 
@@ -118,6 +134,7 @@ contract Blackjack {
         for (uint256 j = 0; j < 2; j++) {
             Card memory card = this.getCard();
             playerSums[msg.sender] += card.number;
+           
         }
 
 
@@ -141,13 +158,16 @@ contract Blackjack {
     function hit() public {
         Card memory card = this.getCard();
         playerSums[msg.sender] += card.number;
+        console.log("Curent card value: %s", playerSums[msg.sender]);
         if (playerSums[msg.sender] == 21) {
+            console.log("BLACKJACK!");
             emit NaturalBlackjack();
             nftMinter.mintTo(msg.sender);
         }
 
 
         if (checkGameOver()) {
+            console.log("Game Over");
             checkWinner();
         }
     }
@@ -157,6 +177,7 @@ contract Blackjack {
         while (dealerSum < 17) {
             Card memory card = this.getCard();
             dealerSum += card.number;
+            console.log("Current dealt number: %s", dealerSum);
         }
         checkWinner();
     }
@@ -173,6 +194,7 @@ contract Blackjack {
         }
 
 
+        console.log("Still playing!");
         return false;
     }
 
@@ -186,6 +208,7 @@ contract Blackjack {
 
         if (playerSums[msg.sender] > 21 && dealerSum < playerSums[msg.sender]) {
             emit PlayerWon(address(this));
+            console.log("The house won!");
             playerBets[msg.sender] = 0;
             return address(this);
         }
@@ -193,23 +216,26 @@ contract Blackjack {
 
         if (dealerSum > 21) {
             emit PlayerWon(msg.sender);
-            //TODO: En este caso gana el jugador, se le debe transferir la cantidad de monedas que apostó * 2
-            coin.transfer(msg.sender, playerBets[msg.sender] * betMultiplication);
+            console.log("Player won!");          
+            // Coin "interaction": Increase the player's credit on the table.
+            playerCredit[msg.sender] += playerBets[msg.sender] * betMultiplication;            
             playerBets[msg.sender] = 0;
             return msg.sender;
         }
 
 
         if (dealerSum > playerSums[msg.sender]) {
+            console.log("The house won!");
             emit PlayerWon(address(this));
             playerBets[msg.sender] = 0;
             return address(this);
         }
 
 
+        console.log("Player won!");
         emit PlayerWon(msg.sender);
-        //TODO: En este caso gana el jugador, se le debe transferir la cantidad de monedas que apostó * 2
-        coin.transfer(msg.sender, playerBets[msg.sender] * betMultiplication);
+        // Coin "interaction": Increase the player's credit
+        playerCredit[msg.sender] +=  playerBets[msg.sender] * betMultiplication;
         playerBets[msg.sender] = 0;
         return msg.sender;
     }
@@ -222,7 +248,26 @@ contract Blackjack {
         }
         Card memory card = deck.cards[deck.currentIndex];
         deck.currentIndex++;
+        console.log("Card %s %s dealt.", card.number, card.suit);
         emit CardDealt(card);
         return card;
     }
+
+
+    // Coin interaction: Claim the current tokens and "leave the table" by reseting the playerCredit.
+    function claimTokens() public {
+        require((playerSums[msg.sender] == 0 && playerBets[msg.sender] == 0) || checkGameOver(), "Can't leave an ongoing game!");
+        require(playerCredit[msg.sender] > 0, "Blackjack: No tokens to claim!");
+
+
+        if (coin.mintAmountFor(msg.sender, playerCredit[msg.sender])) {
+            console.log("Claimed %s tokens back!",playerCredit[msg.sender]);
+            playerCredit[msg.sender] = 0;
+        }
+    }
+
+
+    function currentPlayerCredit() public view returns (uint256) {
+     return playerCredit[msg.sender];
+   }
 }
