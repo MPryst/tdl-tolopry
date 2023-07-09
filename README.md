@@ -1,4 +1,13 @@
 # tdl-tolopry
+# Remix
+## Upload the repository code into a new Remix Workspace.
+## Deploy the ToLoPryCoin contract with some ether/gwei/wei (1 ether, for example)
+## Deploy the NFTPrize contract with the ToLoPryCoin address as parameter
+## Deploy the Blackjack contract with both ToLoPryCoin and NFTPrize addresses as parameters
+## Call ToLoPryCoin.setOperator with the address of the Blackjack contract, to allow the Blackjack claiming tokens.
+### Note: Keep the same account for all the deployments/transactions, since it will be the owner of the contracts.
+#
+# Truffle+Ganache (In progress...)
 ## Install Node.js
 ## npm install -g truffle 
 
