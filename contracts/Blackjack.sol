@@ -156,6 +156,9 @@ contract Blackjack {
 
 
     function hit() public {
+        require(playerBets[msg.sender] > 0, "Needed to bet before playing.");
+
+
         Card memory card = this.getCard();
         playerSums[msg.sender] += card.number;
         console.log("Curent card value: %s", playerSums[msg.sender]);
@@ -208,7 +211,8 @@ contract Blackjack {
 
         if (playerSums[msg.sender] > 21 && dealerSum < playerSums[msg.sender]) {
             emit PlayerWon(address(this));
-            console.log("The house won!");
+            console.log("The house won!");            
+            // The player does not get the bet tokens back.
             playerBets[msg.sender] = 0;
             return address(this);
         }
@@ -218,7 +222,9 @@ contract Blackjack {
             emit PlayerWon(msg.sender);
             console.log("Player won!");          
             // Coin "interaction": Increase the player's credit on the table.
-            playerCredit[msg.sender] += playerBets[msg.sender] * betMultiplication;            
+            console.log("Previous credit: %s", playerCredit[msg.sender]);
+            playerCredit[msg.sender] += playerBets[msg.sender] * betMultiplication;  
+            console.log("Current credit: %s", playerCredit[msg.sender]);          
             playerBets[msg.sender] = 0;
             return msg.sender;
         }
@@ -226,6 +232,7 @@ contract Blackjack {
 
         if (dealerSum > playerSums[msg.sender]) {
             console.log("The house won!");
+            // The player does not get the bet tokens back.            
             emit PlayerWon(address(this));
             playerBets[msg.sender] = 0;
             return address(this);
@@ -234,8 +241,10 @@ contract Blackjack {
 
         console.log("Player won!");
         emit PlayerWon(msg.sender);
-        // Coin "interaction": Increase the player's credit
+        // Coin "interaction": Increase the player's credit on the table.
+        console.log("Previous credit: %s", playerCredit[msg.sender]);
         playerCredit[msg.sender] +=  playerBets[msg.sender] * betMultiplication;
+        console.log("Current credit: %s", playerCredit[msg.sender]);          
         playerBets[msg.sender] = 0;
         return msg.sender;
     }
