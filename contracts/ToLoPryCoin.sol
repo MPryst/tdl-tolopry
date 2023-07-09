@@ -11,7 +11,7 @@ import "./NFTPrize.sol";
 contract ToLoPryCoin is ERC20 {    
 
 
-  string public constant _name = "Casino TLP";
+  string public constant _name = "ToLoPry Coin";
   string public constant _symbol = "TLP";
   uint256 public constant _weiToTLP = 25000; // 25.000 wei = 1 TLP
   uint8 public constant _decimals = 2;
@@ -70,6 +70,16 @@ contract ToLoPryCoin is ERC20 {
       _burn(spender, amount);
       return true;      
    }
+
+
+// A modified version of decreaseAllowance, to be called from an allowed contract, on behalf of the spender.
+   function mintAmountFor(address spender, uint256 amount) public returns (bool) {
+     require(_msgSender() == allowedOperator || _msgSender() == owner, "Coins: Can only be managed by authorized accounts.");
+     address coinOwner = spender;
+        _approve(coinOwner, spender, allowance(coinOwner, spender) + amount);
+        _mint(spender, amount);
+        return true;
+    }
 
 
    function contractTotalBalance() public view returns (uint256) {
