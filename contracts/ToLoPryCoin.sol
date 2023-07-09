@@ -22,6 +22,7 @@ contract ToLoPryCoin is ERC20 {
 
 
   constructor() ERC20(_name, _symbol, INITIAL_SUPPLY) payable {
+    require(msg.value > 0, "Need some initial currency to start functioning.");
     owner = payable(msg.sender);
    }
 
@@ -35,7 +36,7 @@ contract ToLoPryCoin is ERC20 {
    function deposit() public payable {
      require(msg.value >= 25000 wei, "1 TLP token is worth 25.000 wei");
      uint tokenAmount = msg.value * 1 / 25000; // 1 TLP = 0.00025 ether, rounded down.
-     console.log(tokenAmount);
+     console.log("User exchanged wei for %s TLP Tokens", tokenAmount);
      increaseAllowance(msg.sender, tokenAmount);    
    }
 
