@@ -14,7 +14,6 @@ contract NFTPrize is ERC721 {
 
     constructor(address allowedMinter) ERC721("Blackjack ToLoPry Prize", "NFT") {
         // The initial allowed minter, other than the owner, will be the Blackjack contract, sent in the constructor.
-        setApprovalForAll(msg.sender, true);
         setApprovalForAll(allowedMinter, true);
         _allowedMinter = allowedMinter;
     }
