@@ -75,7 +75,6 @@ contract Blackjack {
 
 
     function shuffleDeck(uint256 _randomNumber) public payable {
-        require(!checkGameOver(), "Blackjack: Can't shuffle an ongoing game!");
         require(deck.cards.length > 0, "Array is empty");
 
 
@@ -91,9 +90,10 @@ contract Blackjack {
 
 
     function startGame() public {
+        require(checkGameOver() || (dealerSum == 0 && playerSums[msg.sender] == 0), "Can't start a new game while playing.");
         Card memory card;
         for (uint256 i = 0; i < 2; i++) {
-            card = this.getCard();
+            card = getCard();
             dealerSum += card.number;
         }
         console.log("Game started");
@@ -104,7 +104,7 @@ contract Blackjack {
 
 
     function joinGame() public {
-        require(!checkGameOver(), "Blackjack: Can't join while on an ongoing game!");
+        require(!checkGameOver() && playerBets[msg.sender] == 0, "Blackjack: Can't join while on an ongoing game!");
         playerSums[msg.sender] = 0;
         playerBets[msg.sender] = 0;
         // Coin interaction: Joining a table effectively burns some users tokens.        
@@ -128,11 +128,11 @@ contract Blackjack {
 
 
     function deal() public {
-        require(playerBets[msg.sender] > 0);
+        require(playerBets[msg.sender] > 0, "Need to bet before playing.");
 
 
         for (uint256 j = 0; j < 2; j++) {
-            Card memory card = this.getCard();
+            Card memory card = getCard();
             playerSums[msg.sender] += card.number;
            
         }
@@ -156,10 +156,10 @@ contract Blackjack {
 
 
     function hit() public {
-        require(playerBets[msg.sender] > 0, "Needed to bet before playing.");
+        require(playerBets[msg.sender] > 0, "Need to bet before playing.");
 
 
-        Card memory card = this.getCard();
+        Card memory card = getCard();
         playerSums[msg.sender] += card.number;
         console.log("Curent card value: %s", playerSums[msg.sender]);
         if (playerSums[msg.sender] == 21) {
@@ -177,8 +177,11 @@ contract Blackjack {
 
 
     function stand() public {
+        require(playerBets[msg.sender] > 0, "Need to bet before playing.");
+
+
         while (dealerSum < 17) {
-            Card memory card = this.getCard();
+            Card memory card = getCard();
             dealerSum += card.number;
             console.log("Current dealt number: %s", dealerSum);
         }
@@ -214,6 +217,7 @@ contract Blackjack {
             console.log("The house won!");            
             // The player does not get the bet tokens back.
             playerBets[msg.sender] = 0;
+            playerSums[msg.sender] = 0;
             return address(this);
         }
 
@@ -226,6 +230,7 @@ contract Blackjack {
             playerCredit[msg.sender] += playerBets[msg.sender] * betMultiplication;  
             console.log("Current credit: %s", playerCredit[msg.sender]);          
             playerBets[msg.sender] = 0;
+            playerSums[msg.sender] = 0;
             return msg.sender;
         }
 
@@ -235,6 +240,7 @@ contract Blackjack {
             // The player does not get the bet tokens back.            
             emit PlayerWon(address(this));
             playerBets[msg.sender] = 0;
+            playerSums[msg.sender] = 0;
             return address(this);
         }
 
@@ -246,11 +252,13 @@ contract Blackjack {
         playerCredit[msg.sender] +=  playerBets[msg.sender] * betMultiplication;
         console.log("Current credit: %s", playerCredit[msg.sender]);          
         playerBets[msg.sender] = 0;
+        playerSums[msg.sender] = 0;
         return msg.sender;
     }
 
 
-    function getCard() public returns (Card memory) {
+    function getCard() private returns (Card memory) {
+        require(playerBets[msg.sender] > 0, "Need to bet before playing.");
         if (deck.currentIndex > 51) {
             shuffleDeck(uint256(keccak256(abi.encodePacked(block.timestamp))));
             deck.currentIndex = 0;
